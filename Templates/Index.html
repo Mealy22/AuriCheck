@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuriCheck</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7e3;
+            color: black;
+            text-align: center;
+            margin: 0;
+        }
+        #chart-container {
+            width: 80%;
+            height: 400px;
+            margin: auto;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>AuriCheck</h1>
+    <button id="connectButton" class="button">Conectar</button>
+    <div id="chart-container">
+        <canvas id="ecgChart"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        let connectButton = document.getElementById('connectButton');
+        let ecgChart = document.getElementById('ecgChart').getContext('2d');
+        let chart;
+        let device;
+        let characteristic;
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['0000180f-0000-1000-8000-00805f9b34fb'] }]
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('0000180f-0000-1000-8000-00805f9b34fb');
+                characteristic = await service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
+
+                characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+
+                connectButton.textContent = "Conectado";
+                connectButton.disabled = true;
+                initializeChart();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        function initializeChart() {
+            chart = new Chart(ecgChart, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Filtered ECG',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            data: []
+                        },
+                        {
+                            label: 'Filtered ECG 1',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                            data: []
+                        },
+                        {
+                            label: 'Filter 3_3',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function handleCharacteristicValueChanged(event) {
+            let value = new TextDecoder().decode(event.target.value);
+            let data = value.split(',');
+            let ecg1 = parseFloat(data[0]);
+            let ecg2 = parseFloat(data[1]);
+            let ecg3 = parseFloat(data[2]);
+
+            if (chart.data.labels.length > 100) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[1].data.shift();
+                chart.data.datasets[2].data.shift();
+            }
+
+            let time = chart.data.labels.length ? chart.data.labels[chart.data.labels.length - 1] + 1 : 0;
+
+            chart.data.labels.push(time);
+            chart.data.datasets[0].data.push(ecg1);
+            chart.data.datasets[1].data.push(ecg2);
+            chart.data.datasets[2].data.push(ecg3);
+
+            chart.update();
+        }
+    </script>
+</body>
+</html>

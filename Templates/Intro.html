@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuriCheck</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7e3;
+            color: black;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-bar {
+            width: 50%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .loading-bar div {
+            height: 100%;
+            width: 0;
+            background-color: #007bff;
+            animation: loading 3s linear forwards;
+        }
+        @keyframes loading {
+            to {
+                width: 100%;
+            }
+        }
+        footer a {
+            margin: 0 10px;
+        }
+    </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>AURICHECK</h1>
+    <p>Dispositivo de detección de arritmias con fibrilación auricular</p>
+    <div id="chart"></div>
+    <a href="/pagina_principal"><button>Empezar</button></a>
+    <footer>
+        <a href="#">Facebook</a>
+        <a href="#">LinkedIn</a>
+        <a href="#">Instagram</a>
+        <a href="#">Twitter</a>
+    </footer>
+    <script>
+        var data = [{
+            x: [],
+            y: [],
+            mode: 'lines',
+            name: 'Derivada II',
+            line: {color: '#00cc99'}
+        }, {
+            x: [],
+            y: [],
+            mode: 'lines',
+            name: 'Derivada III',
+            line: {color: '#ff9933'}
+        }, {
+            x: [],
+            y: [],
+            mode: 'lines',
+            name: 'Derivada I',
+            line: {color: '#9966ff'}
+        }];
+
+        var layout = {
+            title: 'AuriCheck',
+            xaxis: {
+                range: [0, 10],
+                autorange: false
+            },
+            yaxis: {
+                range: [-1, 1],
+                autorange: false
+            }
+        };
+
+        Plotly.newPlot('chart', data, layout);
+
+        var cnt = 0;
+        setInterval(function() {
+            var time = new Date().getTime();
+            var update = {
+                x: [[time], [time], [time]],
+                y: [[Math.random()], [Math.random()], [Math.random()]]
+            };
+            
+            var olderTime = time - 10000;
+            var futureTime = time + 10000;
+
+            var minuteView = {
+                xaxis: {
+                    type: 'date',
+                    range: [olderTime, futureTime]
+                }
+            };
+
+            Plotly.relayout('chart', minuteView);
+            Plotly.extendTraces('chart', update, [0, 1, 2]);
+
+            if(cnt > 500) {
+                Plotly.relayout('chart',{
+                    'xaxis.range': [cnt-500,cnt]
+                });
+            }
+            cnt++;
+        }, 1000);
+    </script>
+</body>
+</html>

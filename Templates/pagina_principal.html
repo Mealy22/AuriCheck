@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuriCheck</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7e3;
+      color: black;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .data-box {
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .record-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      max-width: 500px;
+      display: block;
+    }
+    .record-button:hover {
+      background-color: #0056b3;
+    }
+    #chart-container {
+      position: relative;
+      width: 600px;
+      height: 300px;
+      background-color: white;
+    }
+    #data {
+      display: none; /* Ocultar el div de datos */
+    }
+    #introContainer, #mainContainer {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #introContainer.active, #mainContainer.active {
+      display: flex;
+    }
+    .loading-bar {
+      width: 80%;
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .loading-progress {
+      height: 100%;
+      width: 0;
+      background-color: #007bff;
+      transition: width 2s;
+    }
+  </style>
+</head>
+<body>
+  <div id="introContainer" class="container active">
+    <h1>AURICHECK</h1>
+    <p>Dispositivo de detección de arritmias con fibrilación auricular</p>
+    <div class="loading-bar">
+      <div class="loading-progress" id="loadingProgress"></div>
+    </div>
+    <button class="record-button" onclick="startApp()">Empezar</button>
+  </div>
+
+  <div id="mainContainer" class="container">
+    <div class="data-box" id="patientDataBox">
+      <h2>Datos del Paciente</h2>
+      <p><b>Nombre:</b> Mila</p>
+      <p><b>Apellidos:</b> Noriega</p>
+      <p><b>Edad:</b> 22</p>
+      <p><b>Peso:</b> 49</p>
+      <p><b>Ocupación:</b> estudiante</p>
+    </div>
+    <button class="record-button" onclick="startDownloadTimer()">Detectar Arritmia</button>
+    <button id="plotButton" class="record-button" onclick="plotData()">Plotear</button>
+    <div id="chart-container">
+      <img id="ecgChart" src="" alt="ECG Chart">
+    </div>
+  </div>
+
+  <script>
+    function startApp() {
+      document.getElementById('introContainer').classList.remove('active');
+      document.getElementById('mainContainer').classList.add('active');
+      startDownloadTimer();
+    }
+
+    function plotData() {
+      fetch('/plot')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('ecgChart').src = 'data:image/png;base64,' + data.img_data;
+        });
+    }
+
+    function startDownloadTimer() {
+      setInterval(plotData, 3000); // Update plot every 3 seconds
+    }
+
+    window.onload = function() {
+      document.getElementById('loadingProgress').style.width = '100%';
+    }
+  </script>
+</body>
+</html>
+
